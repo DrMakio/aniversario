@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Para Angie · Un sueño de recuerdos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:       #f0e8ff;
+    --ink-soft:  rgba(240,232,255,.68);
+    --ink-faint: rgba(240,232,255,.36);
+    --mauve:     #c8a0e8;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    background: #04010e;
+    color: var(--ink);
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+  #canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+
+  /* ── WHISPER (posición dinámica via JS) ── */
+  #whisper {
+    position: fixed; top: 0; left: 0;
+    transform: translate(-50%, 0);
+    z-index: 12; text-align: center; pointer-events: none;
+    opacity: 0; transition: opacity .35s ease;
+  }
+  #whisper.show { opacity: 1; }
+  .whisper__date {
+    font-size: 11px; letter-spacing: .35em; text-transform: lowercase;
+    color: var(--ink-faint); text-shadow: 0 0 24px rgba(160,80,240,.9); margin-bottom: 5px;
+  }
+  .whisper__title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 300; font-size: clamp(24px, 3.2vw, 40px);
+    color: var(--ink); text-shadow: 0 0 36px rgba(160,80,240,.5), 0 2px 12px rgba(0,0,0,.4);
+  }
+  .whisper__hint {
+    font-size: 10px; letter-spacing: .38em; text-transform: uppercase;
+    color: var(--ink-faint); margin-top: 8px;
+    animation: hint-pulse 2.2s ease-in-out infinite;
+  }
+  @keyframes hint-pulse { 0%,100% { opacity:.4; } 50% { opacity:.9; } }
+
+  /* ── INTRO ── */
+  #intro {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center; padding: 6vmin; z-index: 10;
+    transition: opacity 1.8s ease, transform 1.8s ease, filter 1.8s ease;
+  }
+  #intro.out { opacity:0; transform:scale(1.08); filter:blur(20px); pointer-events:none; }
+  .intro__kicker {
+    font-size: clamp(10px,1.1vw,13px); letter-spacing:.55em; text-transform:uppercase;
+    color: var(--ink-faint); margin-bottom:28px;
+  }
+  .intro__title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight:300; font-size:clamp(52px,10vw,132px); line-height:.92;
+    color: var(--ink); margin-bottom:34px;
+  }
+  .intro__title em { font-style:italic; color:var(--mauve); }
+  .intro__sub { font-size:clamp(14px,1.3vw,17px); line-height:1.75; color:var(--ink-soft); max-width:400px; margin-bottom:52px; }
+  .enter-btn { position:relative; padding:19px 52px; border-radius:999px; transition:transform .45s ease; }
+  .enter-btn:hover { transform:translateY(-3px) scale(1.02); }
+  .enter-btn__bg {
+    position:absolute; inset:0; border-radius:999px;
+    border:1px solid rgba(200,160,232,.28); background:rgba(70,30,110,.22);
+    backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+    box-shadow:0 0 50px rgba(160,80,240,.12),0 20px 40px -20px rgba(100,40,200,.4),inset 0 1px 0 rgba(255,255,255,.14);
+    transition:background .45s,box-shadow .45s;
+  }
+  .enter-btn:hover .enter-btn__bg {
+    background:rgba(90,40,140,.38);
+    box-shadow:0 0 70px rgba(160,80,240,.24),0 24px 48px -18px rgba(100,40,200,.55),inset 0 1px 0 rgba(255,255,255,.22);
+  }
+  .enter-btn__label {
+    position:relative; font-family:'Cormorant Garamond',Georgia,serif;
+    font-weight:300; font-size:22px; letter-spacing:.1em;
+  }
+
+  /* ── MEMORY VIEW ── */
+  #memory-view {
+    position:fixed; inset:0; z-index:20;
+    display:flex; align-items:center; justify-content:center;
+    padding:5vmin; opacity:0;
+    transition:opacity .9s ease; pointer-events:none;
+  }
+  #memory-view.in { opacity:1; pointer-events:all; }
+  .mv-scrim {
+    position:absolute; inset:0;
+    background:radial-gradient(ellipse at 50% 38%,rgba(50,15,90,.74) 0%,rgba(8,3,22,.84) 100%);
+    backdrop-filter:blur(36px) saturate(1.1); -webkit-backdrop-filter:blur(36px) saturate(1.1);
+    cursor:pointer;
+  }
+  .mv-close {
+    position:absolute; top:26px; right:34px; z-index:5;
+    display:flex; align-items:center; gap:10px; color:var(--ink-soft); transition:color .3s;
+  }
+  .mv-close:hover { color:var(--ink); }
+  .mv-close__x { font-family:'Cormorant Garamond',serif; font-size:32px; font-weight:300; line-height:1; }
+  .mv-close__label { font-size:10px; letter-spacing:.4em; text-transform:uppercase; }
+  .mv-counter { position:absolute; top:30px; left:34px; z-index:5; font-family:'Cormorant Garamond',serif; font-size:22px; color:var(--ink-soft); }
+  .mv-counter span { font-size:15px; color:var(--ink-faint); }
+  .mv-nav {
+    position:absolute; top:50%; transform:translateY(-50%); z-index:5;
+    width:52px; height:52px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(255,255,255,.07); border:1px solid rgba(200,160,240,.25);
+    backdrop-filter:blur(10px); font-family:'Cormorant Garamond',serif;
+    font-size:38px; line-height:1; color:var(--ink);
+    transition:background .3s,transform .3s;
+  }
+  .mv-nav:hover { background:rgba(255,255,255,.17); transform:translateY(-50%) scale(1.08); }
+  .mv-nav--prev { left:24px; } .mv-nav--next { right:24px; }
+  .mv-nav span { display:block; margin-top:-5px; }
+  .memory-card {
+    position:relative; z-index:3;
+    display:grid; grid-template-columns:1fr 1fr;
+    width:min(1020px,92vw); max-height:84vh; border-radius:24px;
+    background:rgba(18,6,44,.80); border:1px solid rgba(180,130,240,.22);
+    backdrop-filter:blur(32px) saturate(1.1); -webkit-backdrop-filter:blur(32px) saturate(1.1);
+    box-shadow:0 50px 100px -40px rgba(80,30,180,.48),0 0 0 1px rgba(180,130,240,.08),inset 0 1px 0 rgba(255,255,255,.10);
+    overflow:hidden;
+  }
+  .mc-photo { position:relative; min-height:56vh; background:rgba(12,4,30,.65); }
+  .mc-photo img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .mc-photo-shade { position:absolute; inset:0; z-index:1; pointer-events:none; background:linear-gradient(to right,transparent 70%,rgba(18,6,44,.7) 100%); }
+  .mc-placeholder { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:14px; }
+  .mc-placeholder__glow { width:90px; height:90px; border-radius:50%; filter:blur(24px); opacity:.55; }
+  .mc-placeholder__hint { font-size:9px; letter-spacing:.35em; text-transform:uppercase; color:rgba(180,140,240,.42); }
+  .mc-body { padding:58px 52px 52px; display:flex; flex-direction:column; justify-content:center; gap:20px; }
+  .mc-date { font-size:12px; letter-spacing:.32em; text-transform:lowercase; color:var(--ink-faint); }
+  .mc-title { font-family:'Cormorant Garamond',Georgia,serif; font-weight:300; font-size:clamp(34px,4.5vw,62px); line-height:1.04; color:var(--ink); }
+  .mc-divider { display:flex; align-items:center; gap:12px; }
+  .mc-divider__line { flex:1; height:1px; background:linear-gradient(to right,transparent,rgba(180,130,240,.28),transparent); }
+  .mc-divider__dot { width:4px; height:4px; border-radius:50%; background:var(--mauve); }
+  .mc-note { font-family:'Cormorant Garamond',Georgia,serif; font-style:italic; font-weight:300; font-size:clamp(17px,1.75vw,23px); line-height:1.65; color:var(--ink-soft); max-width:36ch; }
+  @media (max-width:760px) {
+    .memory-card { grid-template-columns:1fr; overflow-y:auto; }
+    .mc-photo { min-height:34vh; } .mc-body { padding:34px 28px; }
+    .mv-nav { width:42px; height:42px; font-size:30px; }
+    .mv-nav--prev { left:10px; } .mv-nav--next { right:10px; }
+    .mv-close { top:14px; right:16px; } .mv-counter { top:18px; left:16px; }
+  }
+  @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.001ms !important; transition-duration:.001ms !important; } }
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+
+<div id="intro">
+  <p class="intro__kicker">para angie</p>
+  <h1 class="intro__title">Un sueño<br><em>de recuerdos</em></h1>
+  <p class="intro__sub">Doce nubes flotan a tu alrededor.<br>Cada una guarda un momento nuestro.<br>Mueve el cursor para explorar. Entra en ellas.</p>
+  <button class="enter-btn" id="enter-btn">
+    <div class="enter-btn__bg"></div>
+    <span class="enter-btn__label">entrar al sueño</span>
+  </button>
+</div>
+
+<div id="memory-view">
+  <div class="mv-scrim" id="mv-scrim"></div>
+  <button class="mv-close" id="mv-close"><span class="mv-close__x">×</span><span class="mv-close__label">cerrar</span></button>
+  <div class="mv-counter"><span id="mv-current">1</span><span> / </span><span id="mv-total">12</span></div>
+  <button class="mv-nav mv-nav--prev" id="mv-prev"><span>‹</span></button>
+  <button class="mv-nav mv-nav--next" id="mv-next"><span>›</span></button>
+  <div class="memory-card">
+    <div class="mc-photo" id="mc-photo">
+      <div class="mc-photo-shade"></div>
+      <div class="mc-placeholder">
+        <div class="mc-placeholder__glow" id="mc-glow"></div>
+        <p class="mc-placeholder__hint">foto aquí</p>
+      </div>
+    </div>
+    <div class="mc-body">
+      <div class="mc-date"  id="mc-date"></div>
+      <h2 class="mc-title" id="mc-title"></h2>
+      <div class="mc-divider"><span class="mc-divider__line"></span><span class="mc-divider__dot"></span><span class="mc-divider__line"></span></div>
+      <p class="mc-note" id="mc-note"></p>
+    </div>
+  </div>
+</div>
+
+<div id="whisper">
+  <div class="whisper__date"  id="whisper-date"></div>
+  <div class="whisper__title" id="whisper-title"></div>
+  <div class="whisper__hint">toca para entrar</div>
+</div>
+
+<script>
+// ── MEMORIES ──────────────────────────────────────────────────────────────────
+const MEMORIES = [
+  { id:0,  date:'enero · 2023',      title:'El primer café',      hue:280, sat:65, photo:null,
+    note:'La mañana en que el tiempo se detuvo y supe que algo había cambiado para siempre.' },
+  { id:1,  date:'febrero · 2023',    title:'Tu primer mensaje',   hue:250, sat:60, photo:null,
+    note:'Tres palabras que llegaron a las 11 de la noche y que no supe cómo responder sin delatar todo lo que sentía.' },
+  { id:2,  date:'marzo · 2023',      title:'Aquella tarde',       hue:320, sat:58, photo:null,
+    note:'El sol se ponía de una manera que solo existe en los sueños y en los recuerdos que uno guarda con más cuidado.' },
+  { id:3,  date:'abril · 2023',      title:'La primera promesa',  hue:350, sat:55, photo:null,
+    note:'No hicimos ninguna en voz alta. Pero estaba ahí, entre las palabras que no dijimos y las miradas que sí.' },
+  { id:4,  date:'junio · 2023',      title:'Tu risa',             hue:195, sat:55, photo:null,
+    note:'No sabía que una risa podía iluminar un cuarto entero. Aprendí eso contigo.' },
+  { id:5,  date:'agosto · 2023',     title:'El verano nuestro',   hue:45,  sat:62, photo:null,
+    note:'Calor, música baja, tiempo que no tiene prisa. Así debería ser siempre todo.' },
+  { id:6,  date:'octubre · 2023',    title:'La lluvia contigo',   hue:210, sat:58, photo:null,
+    note:'La lluvia sonaba diferente ese día. Como si el mundo entero quisiera detenerse para mirarnos.' },
+  { id:7,  date:'diciembre · 2023',  title:'El primer abrazo',    hue:38,  sat:68, photo:null,
+    note:'El mundo afuera podía esperar. Dentro de ese abrazo el tiempo era otro.' },
+  { id:8,  date:'enero · 2024',      title:'Año nuevo',           hue:170, sat:52, photo:null,
+    note:'Lo único que quería llevarme al año siguiente era seguir conociéndote.' },
+  { id:9,  date:'febrero · 2024',    title:'Siempre',             hue:155, sat:48, photo:null,
+    note:'Aquí, contigo, en este sueño que construimos juntos sin darnos cuenta.' },
+  { id:10, date:'marzo · 2024',      title:'Tu cumpleaños',       hue:300, sat:62, photo:null,
+    note:'Quería que fuera el mejor día. Creo que para mí lo fue más que para ti.' },
+  { id:11, date:'hoy',               title:'Este momento',        hue:260, sat:70, photo:null,
+    note:'Cada recuerdo me trajo hasta aquí. Y aquí, contigo, es donde quiero quedarme.' },
+];
+
+// ── CANVAS & GLOBALS ──────────────────────────────────────────────────────────
+const canvas = document.getElementById('canvas');
+const ctx    = canvas.getContext('2d');
+let W, H;
+
+let appState      = 'intro';
+let activeIdx     = 0;
+let enterCloud    = null;
+let enterProgress = 0;
+let hoveredCloud  = null;
+let mouseIdleFrames = 0;
+
+// ── CÁMARA 3D ─────────────────────────────────────────────────────────────────
+const cam = { yaw: 0, pitch: 0, targetYaw: 0, targetPitch: 0 };
+
+function rotY(x, y, z, a) {
+  const c = Math.cos(a), s = Math.sin(a);
+  return { x: x*c - z*s, y, z: x*s + z*c };
+}
+function rotX(x, y, z, a) {
+  const c = Math.cos(a), s = Math.sin(a);
+  return { x, y: y*c - z*s, z: y*s + z*c };
+}
+function project(wx, wy, wz) {
+  const fov = H * 1.1;
+  let p = rotY(wx, wy, wz, -cam.yaw);
+  p = rotX(p.x, p.y, p.z, -cam.pitch);
+  if (p.z >= -12) return null;
+  const sc = Math.min(fov / (-p.z), 3.8);
+  return { sx: W/2 + p.x*sc, sy: H/2 - p.y*sc, scale: sc, depth: p.z };
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+const rnd    = (a, b) => a + Math.random() * (b - a);
+const rndTau = ()     => Math.random() * Math.PI * 2;
+
+// ── ESTRELLAS ─────────────────────────────────────────────────────────────────
+let stars = [];
+
+function initStars() {
+  stars = [];
+  const n = Math.floor(W * H / 3800);
+  for (let i = 0; i < n; i++) {
+    const roll = Math.random();
+    const tier = roll < 0.04 ? 'bright' : roll < 0.22 ? 'medium' : 'tiny';
+    stars.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: tier === 'bright' ? rnd(2, 3.8) : tier === 'medium' ? rnd(0.85, 1.8) : rnd(0.18, 0.72),
+      phase: rndTau(),
+      freq:  rnd(0.1, tier === 'bright' ? 0.45 : 0.85),
+      bright: tier === 'bright' ? rnd(0.72, 1) : tier === 'medium' ? rnd(0.28, 0.65) : rnd(0.06, 0.28),
+      hue: rnd(215, 305),
+      tier
+    });
+  }
+}
+
+function drawStars(t) {
+  const ox = cam.yaw * 32, oy = cam.pitch * 20;
+  for (const s of stars) {
+    const a  = s.bright * (0.55 + 0.45 * Math.sin(t * s.freq + s.phase));
+    const sx = ((s.x - ox) % W + W) % W;
+    const sy = ((s.y + oy) % H + H) % H;
+
+    if (s.tier === 'bright') {
+      ctx.save();
+      const g = ctx.createRadialGradient(sx, sy, 0, sx, sy, s.r * 7);
+      g.addColorStop(0, `hsla(${s.hue},60%,96%,${a * 0.38})`);
+      g.addColorStop(1, 'transparent');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(sx, sy, s.r * 7, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = a * 0.22;
+      ctx.strokeStyle = `hsla(${s.hue},70%,96%,1)`;
+      ctx.lineWidth = 0.65;
+      ctx.beginPath();
+      ctx.moveTo(sx - s.r*11, sy); ctx.lineTo(sx + s.r*11, sy);
+      ctx.moveTo(sx, sy - s.r*11); ctx.lineTo(sx, sy + s.r*11);
+      ctx.stroke();
+      ctx.restore();
+    }
+    ctx.beginPath();
+    ctx.arc(sx, sy, s.r, 0, Math.PI * 2);
+    ctx.fillStyle = `hsla(${s.hue},55%,96%,${a})`;
+    ctx.fill();
+  }
+}
+
+// ── COMETAS ───────────────────────────────────────────────────────────────────
+const comets = [];
+let lastCometT = -999, nextCometDelay = rnd(5, 14);
+
+function spawnComet() {
+  const fromLeft = Math.random() < 0.5;
+  const angle    = rnd(Math.PI * 0.08, Math.PI * 0.42);
+  const speed    = rnd(260, 680);
+  comets.push({
+    x: fromLeft ? rnd(-80, W * 0.28) : rnd(W * 0.72, W + 80),
+    y: rnd(-80, H * 0.28),
+    vx: Math.cos(angle) * speed * (fromLeft ? 1 : -1),
+    vy: Math.sin(angle) * speed,
+    tailLen: rnd(90, 270),
+    hue: rnd(195, 330),
+    life: 0, maxLife: rnd(1.6, 4.2),
+    bright: rnd(0.62, 1)
+  });
+}
+
+function drawComets(t, dt) {
+  if (t - lastCometT > nextCometDelay) {
+    spawnComet(); lastCometT = t; nextCometDelay = rnd(7, 22);
+  }
+  for (let i = comets.length - 1; i >= 0; i--) {
+    const c = comets[i];
+    c.life += dt; c.x += c.vx * dt; c.y += c.vy * dt;
+    const fade = Math.min(c.life / 0.18, 1) * Math.max(0, 1 - c.life / c.maxLife);
+    if (fade < 0.01 || c.y > H + 140 || c.x < -300 || c.x > W + 300) {
+      comets.splice(i, 1); continue;
+    }
+    const spd = Math.hypot(c.vx, c.vy);
+    const nx  = c.vx / spd, ny = c.vy / spd;
+    const tx  = c.x - nx * c.tailLen, ty = c.y - ny * c.tailLen;
+
+    ctx.save();
+    const g = ctx.createLinearGradient(c.x, c.y, tx, ty);
+    g.addColorStop(0,    `hsla(${c.hue},85%,96%,${fade * c.bright})`);
+    g.addColorStop(0.18, `hsla(${c.hue},72%,85%,${fade * c.bright * 0.38})`);
+    g.addColorStop(1,    'transparent');
+    ctx.strokeStyle = g; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(c.x, c.y); ctx.lineTo(tx, ty); ctx.stroke();
+    const hg = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, 9);
+    hg.addColorStop(0, `hsla(${c.hue},90%,98%,${fade})`);
+    hg.addColorStop(1, 'transparent');
+    ctx.fillStyle = hg;
+    ctx.beginPath(); ctx.arc(c.x, c.y, 9, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+}
+
+// ── NUBES DE GAS ──────────────────────────────────────────────────────────────
+let clouds = [];
+
+function makeBlob({ baseX=0, baseY=0, r, wisp=false }) {
+  const amp = wisp ? rnd(50, 125) : rnd(8, 28);
+  return {
+    baseX, baseY, r,
+    ax1:rnd(-amp,amp),          fx1:rnd(0.07,0.28), px1:rndTau(),
+    ax2:rnd(-amp*.5,amp*.5),    fx2:rnd(0.04,0.15), px2:rndTau(),
+    ay1:rnd(-amp,amp),          fy1:rnd(0.07,0.26), py1:rndTau(),
+    ay2:rnd(-amp*.45,amp*.45),  fy2:rnd(0.04,0.14), py2:rndTau(),
+    rAmp:rnd(4, r*.42), rFreq:rnd(0.08,0.26), rPh:rndTau(),
+    oBase: wisp ? rnd(0.018,0.068) : rnd(0.05,0.13),
+    oAmp:rnd(0.014,0.058), oFreq:rnd(0.06,0.20), oPh:rndTau(),
+    hShift:rnd(-22,22)
+  };
+}
+
+function initClouds() {
+  const R   = Math.min(W, H) * 0.62;
+  const phi = Math.PI * (3 - Math.sqrt(5));
+  const n   = MEMORIES.length;
+  const yawOff = rnd(0, Math.PI * 2);
+
+  clouds = MEMORIES.map((mem, i) => {
+    const yi  = 1 - (i / (n - 1)) * 2;
+    const ri  = Math.sqrt(Math.max(0, 1 - yi * yi));
+    const th  = phi * i + yawOff;
+    const blobs = [];
+    for (let j = 0; j < 6; j++) blobs.push(makeBlob({ baseX:rnd(-22,22), baseY:rnd(-15,15), r:rnd(62,105) }));
+    for (let j = 0; j < 7; j++) blobs.push(makeBlob({ baseX:rnd(-55,55), baseY:rnd(-38,38), r:rnd(28,58) }));
+    for (let j = 0; j < 9; j++) blobs.push(makeBlob({ r:rnd(8,24), wisp:true }));
+    return {
+      wx0: ri * Math.cos(th) * R,
+      wy0: yi * R * 0.55,
+      wz0: ri * Math.sin(th) * R,
+      dAmpX:rnd(12,34), dFrqX:rnd(0.04,0.11), dPhX:rndTau(),
+      dAmpY:rnd(8,20),  dFrqY:rnd(0.03,0.09),  dPhY:rndTau(),
+      dAmpZ:rnd(12,32), dFrqZ:rnd(0.04,0.10),  dPhZ:rndTau(),
+      blobs, hue:mem.hue, sat:mem.sat, memory:mem,
+      hovered:false, projPos:null
+    };
+  });
+}
+
+const blobX = (b,t) => b.baseX + b.ax1*Math.sin(b.fx1*t+b.px1) + b.ax2*Math.sin(b.fx2*t+b.px2);
+const blobY = (b,t) => b.baseY + b.ay1*Math.sin(b.fy1*t+b.py1) + b.ay2*Math.sin(b.fy2*t+b.py2);
+const blobR = (b,t) => Math.max(1, b.r + b.rAmp*Math.sin(b.rFreq*t+b.rPh));
+const blobO = (b,t,hov) => Math.max(0, (hov ? Math.min(b.oBase*1.72,0.29) : b.oBase) + b.oAmp*Math.sin(b.oFreq*t+b.oPh));
+
+function drawClouds(t) {
+  for (const c of clouds) c.projPos = null;
+
+  const visible = clouds.map(c => {
+    const wx = c.wx0 + c.dAmpX * Math.sin(t * c.dFrqX + c.dPhX);
+    const wy = c.wy0 + c.dAmpY * Math.sin(t * c.dFrqY + c.dPhY);
+    const wz = c.wz0 + c.dAmpZ * Math.sin(t * c.dFrqZ + c.dPhZ);
+    return { c, proj: project(wx, wy, wz) };
+  }).filter(({ proj }) => proj !== null)
+    .sort((a, b) => a.proj.depth - b.proj.depth); // farthest (most negative) first
+
+  for (const { c: cloud, proj } of visible) {
+    cloud.projPos = proj;
+    const { sx: px, sy: py, scale } = proj;
+    const h = cloud.hue, s = cloud.sat;
+    const hov        = cloud.hovered;
+    const isEntering = cloud === enterCloud;
+    const eScale     = isEntering ? (1 + Math.min(enterProgress, 1) * 2.8) : 1;
+    const totalScale = scale * eScale;
+
+    if (hov || isEntering) {
+      ctx.globalCompositeOperation = 'source-over';
+      const haloR = 195 * totalScale;
+      const halo  = ctx.createRadialGradient(px, py, 0, px, py, haloR);
+      halo.addColorStop(0, `hsla(${h},${s}%,72%,${isEntering ? 0.20 + Math.min(enterProgress,1)*0.16 : 0.11})`);
+      halo.addColorStop(1, 'transparent');
+      ctx.beginPath(); ctx.arc(px, py, haloR, 0, Math.PI * 2);
+      ctx.fillStyle = halo; ctx.fill();
+    }
+
+    ctx.globalCompositeOperation = 'lighter';
+    for (const b of cloud.blobs) {
+      const cx  = px + blobX(b, t) * totalScale;
+      const cy  = py + blobY(b, t) * totalScale;
+      const cr  = Math.max(1, blobR(b, t) * totalScale);
+      const opa = blobO(b, t, hov || isEntering) * (0.22 + scale * 0.78);
+      const bh  = (h + b.hShift + 360) % 360;
+      const g   = ctx.createRadialGradient(cx, cy, 0, cx, cy, cr);
+      g.addColorStop(0,    `hsla(${bh},${s}%,88%,${opa})`);
+      g.addColorStop(0.32, `hsla(${bh},${s}%,80%,${opa * 0.48})`);
+      g.addColorStop(0.65, `hsla(${bh},${s}%,72%,${opa * 0.17})`);
+      g.addColorStop(1,    'transparent');
+      ctx.beginPath(); ctx.arc(cx, cy, cr, 0, Math.PI * 2);
+      ctx.fillStyle = g; ctx.fill();
+    }
+    ctx.globalCompositeOperation = 'source-over';
+  }
+}
+
+// ── INMERSIÓN ─────────────────────────────────────────────────────────────────
+function drawImmersion(t) {
+  if (!enterCloud) return;
+  const prog  = Math.min(enterProgress, 1);
+  const h     = enterCloud.hue, s = enterCloud.sat;
+  const pulse = 0.5 + 0.5 * Math.sin(t * 9);
+  const a     = Math.pow(prog, 1.5) * (0.88 + pulse * 0.12);
+
+  const fog = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, Math.max(W, H) * 0.78);
+  fog.addColorStop(0,   `hsla(${h},${s+10}%,12%,${a})`);
+  fog.addColorStop(0.5, `hsla(${h},${s}%,7%,${a * 0.82})`);
+  fog.addColorStop(1,   `hsla(${h},${s}%,3%,${a * 0.6})`);
+  ctx.fillStyle = fog; ctx.fillRect(0, 0, W, H);
+
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < 6; i++) {
+    const angle = t * (0.28 + i * 0.115) + i * 1.047;
+    const r     = (70 + i * 38) * prog;
+    const gx    = W/2 + Math.cos(angle) * r;
+    const gy    = H/2 + Math.sin(angle) * r * 0.62;
+    const gg    = ctx.createRadialGradient(gx, gy, 0, gx, gy, 55 * prog);
+    gg.addColorStop(0, `hsla(${h + i * 12},${s + 20}%,72%,${0.07 * prog})`);
+    gg.addColorStop(1, 'transparent');
+    ctx.fillStyle = gg;
+    ctx.beginPath(); ctx.arc(gx, gy, 55 * prog, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+// ── FONDO ─────────────────────────────────────────────────────────────────────
+function drawBackground(t) {
+  const bg = ctx.createRadialGradient(W*.5, H*.36, 0, W*.5, H*.52, Math.max(W,H)*.9);
+  bg.addColorStop(0,   '#1c0840');
+  bg.addColorStop(0.4, '#0e0425');
+  bg.addColorStop(1,   '#04010e');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+
+  const breath = 0.5 + 0.5 * Math.sin(t * 0.16);
+  const neb = ctx.createRadialGradient(W*.5, H*.46, 0, W*.5, H*.46, Math.min(W,H)*.42);
+  neb.addColorStop(0,   `rgba(90,28,168,${0.055 + breath * 0.04})`);
+  neb.addColorStop(0.6, `rgba(50,10,100,${0.025 + breath * 0.02})`);
+  neb.addColorStop(1,   'rgba(50,10,100,0)');
+  ctx.fillStyle = neb; ctx.fillRect(0, 0, W, H);
+}
+
+function drawVignette() {
+  const vig = ctx.createRadialGradient(W/2, H/2, Math.min(W,H)*.26, W/2, H/2, Math.max(W,H)*.83);
+  vig.addColorStop(0, 'rgba(4,1,14,0)');
+  vig.addColorStop(1, 'rgba(4,1,14,.78)');
+  ctx.fillStyle = vig; ctx.fillRect(0, 0, W, H);
+}
+
+// ── WHISPER ───────────────────────────────────────────────────────────────────
+const whisperEl    = document.getElementById('whisper');
+const whisperDate  = document.getElementById('whisper-date');
+const whisperTitle = document.getElementById('whisper-title');
+
+function updateWhisper() {
+  if (appState !== 'dream' || !hoveredCloud || !hoveredCloud.projPos) {
+    whisperEl.classList.remove('show');
+    canvas.style.cursor = appState === 'dream' ? 'crosshair' : 'default';
+    return;
+  }
+  const { sx, sy, scale } = hoveredCloud.projPos;
+  whisperEl.style.left = sx + 'px';
+  whisperEl.style.top  = (sy + 82 * scale) + 'px';
+  whisperDate.textContent  = hoveredCloud.memory.date;
+  whisperTitle.textContent = hoveredCloud.memory.title;
+  whisperEl.classList.add('show');
+  canvas.style.cursor = 'pointer';
+}
+
+// ── HIT TEST ──────────────────────────────────────────────────────────────────
+function hitTest(mx, my) {
+  let best = null, bestD = Infinity;
+  for (const cloud of clouds) {
+    if (!cloud.projPos) continue;
+    const { sx, sy, scale } = cloud.projPos;
+    const hitR = Math.max(52, 115 * scale);
+    const d    = Math.hypot(mx - sx, my - sy);
+    if (d < hitR && d < bestD) { best = cloud; bestD = d; }
+  }
+  return best;
+}
+
+// ── LOOP ──────────────────────────────────────────────────────────────────────
+let t0 = null, tPrev = null;
+
+function loop(ts) {
+  if (!t0) { t0 = ts; tPrev = ts; }
+  const t  = (ts - t0) * 0.001;
+  const dt = Math.min((ts - tPrev) * 0.001, 0.05);
+  tPrev = ts;
+
+  if (appState === 'dream' || appState === 'entering') {
+    mouseIdleFrames++;
+    if (mouseIdleFrames > 260) cam.targetYaw += 0.00014;
+    const ease = appState === 'entering' ? 0.012 : 0.028;
+    cam.yaw   += (cam.targetYaw   - cam.yaw)   * ease;
+    cam.pitch += (cam.targetPitch - cam.pitch)  * ease;
+  }
+
+  if (appState === 'entering') {
+    enterProgress = Math.min(1, enterProgress + dt / 1.4);
+    if (enterProgress >= 1) {
+      appState = 'memory';
+      renderCard();
+      memView.classList.add('in');
+    }
+  }
+
+  ctx.clearRect(0, 0, W, H);
+  drawBackground(t);
+  drawStars(t);
+  drawComets(t, dt);
+  drawClouds(t);
+  if (enterCloud) drawImmersion(t);
+  drawVignette();
+  updateWhisper();
+  requestAnimationFrame(loop);
+}
+
+// ── EVENTOS ───────────────────────────────────────────────────────────────────
+window.addEventListener('mousemove', e => {
+  mouseIdleFrames = 0;
+  if (appState !== 'dream') return;
+  cam.targetYaw   =  (e.clientX / W - 0.5) * Math.PI * 1.35;
+  cam.targetPitch = -(e.clientY / H - 0.5) * Math.PI * 0.52;
+  const hit = hitTest(e.clientX, e.clientY);
+  hoveredCloud = hit;
+  for (const c of clouds) c.hovered = (c === hit);
+});
+
+canvas.addEventListener('click', e => {
+  if (appState !== 'dream') return;
+  const hit = hitTest(e.clientX, e.clientY);
+  if (hit) startEnter(hit);
+});
+
+canvas.addEventListener('touchend', e => {
+  if (appState !== 'dream') return;
+  const t = e.changedTouches[0];
+  const hit = hitTest(t.clientX, t.clientY);
+  if (hit) startEnter(hit);
+}, { passive: true });
+
+document.addEventListener('keydown', e => {
+  if (appState !== 'memory') return;
+  if (e.key === 'Escape')     closeMemory();
+  if (e.key === 'ArrowLeft')  { activeIdx = (activeIdx - 1 + MEMORIES.length) % MEMORIES.length; renderCard(); }
+  if (e.key === 'ArrowRight') { activeIdx = (activeIdx + 1) % MEMORIES.length; renderCard(); }
+});
+
+// ── MEMORIA ───────────────────────────────────────────────────────────────────
+const memView = document.getElementById('memory-view');
+const mcDate  = document.getElementById('mc-date');
+const mcTitle = document.getElementById('mc-title');
+const mcNote  = document.getElementById('mc-note');
+const mcGlow  = document.getElementById('mc-glow');
+const mcPhoto = document.getElementById('mc-photo');
+const mvCurr  = document.getElementById('mv-current');
+const mvTotal = document.getElementById('mv-total');
+mvTotal.textContent = MEMORIES.length;
+
+function startEnter(cloud) {
+  enterCloud = cloud; enterProgress = 0;
+  activeIdx  = cloud.memory.id;
+  appState   = 'entering';
+  whisperEl.classList.remove('show');
+  hoveredCloud = null;
+  for (const c of clouds) c.hovered = false;
+}
+
+function closeMemory() {
+  appState      = 'dream';
+  enterCloud    = null;
+  enterProgress = 0;
+  memView.classList.remove('in');
+}
+
+function renderCard() {
+  const mem = MEMORIES[activeIdx];
+  mcDate.textContent  = mem.date;
+  mcTitle.textContent = mem.title;
+  mcNote.textContent  = mem.note;
+  mvCurr.textContent  = activeIdx + 1;
+  mcGlow.style.background = `radial-gradient(circle, hsl(${mem.hue},${mem.sat}%,72%) 0%, transparent 70%)`;
+  const oldImg = mcPhoto.querySelector('img');
+  if (oldImg) oldImg.remove();
+  const ph = mcPhoto.querySelector('.mc-placeholder');
+  if (mem.photo) {
+    const img = document.createElement('img'); img.src = mem.photo;
+    mcPhoto.insertBefore(img, mcPhoto.firstChild);
+    if (ph) ph.style.display = 'none';
+  } else {
+    if (ph) ph.style.display = '';
+  }
+}
+
+document.getElementById('mv-close').addEventListener('click', closeMemory);
+document.getElementById('mv-scrim').addEventListener('click', closeMemory);
+document.getElementById('mv-prev').addEventListener('click', () => {
+  activeIdx = (activeIdx - 1 + MEMORIES.length) % MEMORIES.length; renderCard();
+});
+document.getElementById('mv-next').addEventListener('click', () => {
+  activeIdx = (activeIdx + 1) % MEMORIES.length; renderCard();
+});
+
+document.getElementById('enter-btn').addEventListener('click', () => {
+  appState = 'dream';
+  const intro = document.getElementById('intro');
+  intro.classList.add('out');
+  setTimeout(() => intro.remove(), 2200);
+});
+
+// ── RESIZE ────────────────────────────────────────────────────────────────────
+function resize() {
+  W = canvas.width  = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  initStars();
+  initClouds();
+}
+window.addEventListener('resize', resize);
+resize();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

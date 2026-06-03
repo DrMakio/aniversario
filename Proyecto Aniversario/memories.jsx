@@ -1,0 +1,103 @@
+// Datos de los 12 recuerdos.
+// Edita libremente: cada uno tiene fecha, título y nota.
+// Cuando tengas las fotos, reemplaza `photo: null` por la ruta (ej. "fotos/01.jpg").
+const memories = [
+  {
+    id: 0,
+    date: "Donde todo comenzó",
+    title: "El día que te vi",
+    note: "Hay un instante que guardo intacto: el momento en que cruzaste mi camino y algo, sin avisar, cambió para siempre.",
+    photo: "../fotos/20250907_120315.jpg",
+    hue: 18,
+  },
+  {
+    id: 1,
+    date: "Una tarde cualquiera",
+    title: "Nuestro primer café",
+    note: "Hablamos hasta que el café se enfrió. El tiempo se hizo lento, suave, como ahora lo recuerdo.",
+    photo: "../fotos/20260215_141422.jpg",
+    hue: 30,
+  },
+  {
+    id: 2,
+    date: "Sin rumbo",
+    title: "Aquella caminata",
+    note: "Caminamos sin destino y descubrí que contigo cualquier calle se parecía a casa.",
+    photo: "../fotos/20260215_171216.jpg",
+    hue: 350,
+  },
+  {
+    id: 3,
+    date: "En voz baja",
+    title: "El primer 'te quiero'",
+    note: "Lo dijiste casi sin querer, y yo lo escuché como si el mundo se hubiera quedado en silencio para oírlo.",
+    photo: null,
+    hue: 340,
+  },
+  {
+    id: 4,
+    date: "Nuestra banda sonora",
+    title: "Una canción para nosotros",
+    note: "Cada vez que suena vuelvo a ese momento. Una melodía que ya no me pertenece sola.",
+    photo: null,
+    hue: 280,
+  },
+  {
+    id: 5,
+    date: "Lejos, juntos",
+    title: "El viaje",
+    note: "Maletas pequeñas y un mapa improvisado. Lo que más recuerdo no son los lugares, sino tu risa entre ellos.",
+    photo: null,
+    hue: 200,
+  },
+  {
+    id: 6,
+    date: "Bajo el cielo gris",
+    title: "Una tarde de lluvia",
+    note: "Corrimos sin paraguas y nos reímos empapados. Llegamos a casa con frío y con el pecho lleno.",
+    photo: null,
+    hue: 220,
+  },
+  {
+    id: 7,
+    date: "Cuando todos dormían",
+    title: "Bajo las estrellas",
+    note: "Miramos el cielo y, por un instante, sentí que el universo entero se inclinaba a escucharnos.",
+    photo: null,
+    hue: 260,
+  },
+  {
+    id: 8,
+    date: "En lo cotidiano",
+    title: "Risas en la cocina",
+    note: "Una cena improvisada, harina en tu mejilla, una canción de fondo. La felicidad sabía a eso.",
+    photo: null,
+    hue: 40,
+  },
+  {
+    id: 9,
+    date: "Sin decir nada",
+    title: "El abrazo más largo",
+    note: "No hizo falta hablar. Estaba todo dicho en el modo en que tus brazos me sostuvieron.",
+    photo: null,
+    hue: 12,
+  },
+  {
+    id: 10,
+    date: "Un secreto nuestro",
+    title: "Aquel momento que nadie sabe",
+    note: "Hay recuerdos que prefiero guardar contigo, en voz baja. Tú sabes a cuál me refiero.",
+    photo: null,
+    hue: 320,
+  },
+  {
+    id: 11,
+    date: "Hoy",
+    title: "Y aún seguimos aquí",
+    note: "Hoy celebro otro año a tu lado. Si pudiera elegir otra vez, te elegiría siempre. Feliz aniversario, Angie.",
+    photo: null,
+    hue: 8,
+  },
+];
+
+window.memories = memories;
