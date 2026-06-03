@@ -273,73 +273,6 @@ const MEMORIES = [
     note:'Nuestro primer viaje en familia.' },
 ];
 
-// ── CONSTELACIÓN ──────────────────────────────────────────────────────────────
-let constellationStars = [];
-
-function buildConstellation() {
-  const W2 = Math.min(W * 0.58, 640);
-  const H2 = W2 * 0.30;
-  const tmp = document.createElement('canvas');
-  tmp.width = Math.round(W2); tmp.height = Math.round(H2);
-  const tc  = tmp.getContext('2d');
-  tc.fillStyle  = '#fff';
-  const sz = Math.round(H2 * 0.40);
-  tc.font       = `300 ${sz}px 'Cormorant Garamond', Georgia, serif`;
-  tc.textAlign  = 'center';
-  tc.fillText('Te amo', W2/2, H2 * 0.44);
-  tc.fillText('Angie',  W2/2, H2 * 0.92);
-  const { data } = tc.getImageData(0, 0, tmp.width, tmp.height);
-  const offX = (W - W2) / 2;
-  const offY = H * 0.10;
-  const step = 8;
-  constellationStars = [];
-  for (let y = 0; y < tmp.height; y += step) {
-    for (let x = 0; x < tmp.width; x += step) {
-      if (data[(y * tmp.width + x) * 4 + 3] > 90) {
-        constellationStars.push({
-          x: x + offX, y: y + offY,
-          r: rnd(0.8, 2.5),
-          base: rnd(0.48, 0.92),
-          freq: rnd(0.35, 2.1),
-          ph: rndTau(),
-          hue: rnd(258, 312)
-        });
-      }
-    }
-  }
-}
-
-function drawConstellation(t) {
-  if (!constellationStars.length) return;
-  ctx.save();
-  // Líneas de constelación entre estrellas vecinas
-  ctx.strokeStyle = 'rgba(200,155,255,0.07)';
-  ctx.lineWidth   = 0.65;
-  for (let i = 0; i < constellationStars.length; i++) {
-    const a = constellationStars[i];
-    for (let j = i + 1; j < constellationStars.length; j++) {
-      const b = constellationStars[j];
-      if (Math.hypot(a.x - b.x, a.y - b.y) < 22) {
-        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
-      }
-    }
-  }
-  // Estrellas parpadeantes
-  for (const s of constellationStars) {
-    const alpha = s.base * (0.5 + 0.5 * Math.sin(t * s.freq + s.ph));
-    if (s.r > 1.4) {
-      const g = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r * 5);
-      g.addColorStop(0, `hsla(${s.hue},72%,92%,${alpha * 0.42})`);
-      g.addColorStop(1, 'transparent');
-      ctx.fillStyle = g;
-      ctx.beginPath(); ctx.arc(s.x, s.y, s.r * 5, 0, Math.PI * 2); ctx.fill();
-    }
-    ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-    ctx.fillStyle = `hsla(${s.hue},65%,96%,${alpha})`;
-    ctx.fill();
-  }
-  ctx.restore();
-}
 
 // ── POLVO ESTELAR (memory-view) ───────────────────────────────────────────────
 let mvDust = [];
@@ -879,7 +812,6 @@ function loop(ts) {
   ctx.clearRect(0, 0, W, H);
   drawBackground(t);
   drawStars(t);
-  drawConstellation(t);
   drawComets(t, dt);
   drawClouds(t);
   drawAsteroid(t, dt);
@@ -1004,7 +936,6 @@ function resize() {
   prevMouseX = W/2; prevMouseY = H/2;
   initStars();
   initClouds();
-  document.fonts.ready.then(buildConstellation);
 }
 window.addEventListener('resize', resize);
 resize();
