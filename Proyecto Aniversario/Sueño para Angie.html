@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400;1,600&display=swap" rel="stylesheet">
+<script src="https://www.youtube.com/iframe_api"></script>
 <style>
   :root {
     --ink:       #f0e8ff;
@@ -153,10 +154,27 @@
     .mv-close { top:14px; right:16px; } .mv-counter { top:18px; left:16px; }
   }
   @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.001ms !important; transition-duration:.001ms !important; } }
+
+  /* ── BOTÓN MÚSICA ── */
+  #music-btn {
+    position:fixed; bottom:28px; right:32px; z-index:15;
+    width:44px; height:44px; border-radius:50%;
+    background:rgba(70,30,110,.28); border:1px solid rgba(200,160,232,.28);
+    backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+    font-size:20px; color:var(--ink-soft);
+    cursor:pointer; display:none;
+    align-items:center; justify-content:center;
+    transition:background .3s, color .3s, opacity .3s;
+  }
+  #music-btn.visible { display:flex; }
+  #music-btn:hover   { background:rgba(90,40,140,.48); color:var(--ink); }
+  #music-btn.muted   { opacity:.38; }
 </style>
 </head>
 <body>
 <canvas id="canvas"></canvas>
+<div id="yt-player" style="position:fixed;width:0;height:0;overflow:hidden;pointer-events:none;"></div>
+<button id="music-btn" aria-label="Música">♪</button>
 
 <div id="intro">
   <p class="intro__kicker">para angie</p>
@@ -233,6 +251,50 @@ const MEMORIES = [
   { id:15, title:'En familia',           hue:160, sat:55, photo:'Fotos aniversario/16.jpg',
     note:'Nuestro primer viaje en familia.' },
 ];
+
+// ── MÚSICA ────────────────────────────────────────────────────────────────────
+const YT_VIDEO_ID = '6wh-GkQHibU';
+let ytPlayer    = null;
+let musicReady  = false;
+let musicActive = true;
+const musicBtn  = document.getElementById('music-btn');
+
+function onYouTubeIframeAPIReady() {
+  ytPlayer = new YT.Player('yt-player', {
+    videoId: YT_VIDEO_ID,
+    playerVars: { autoplay:0, controls:0, loop:1, playlist:YT_VIDEO_ID, rel:0, modestbranding:1 },
+    events: {
+      onReady: e => {
+        musicReady = true;
+        e.target.setVolume(0);
+      }
+    }
+  });
+}
+
+function fadeInMusic() {
+  if (!ytPlayer || !musicActive) return;
+  ytPlayer.playVideo();
+  let vol = 0;
+  const iv = setInterval(() => {
+    vol = Math.min(vol + 3, 70);
+    ytPlayer.setVolume(vol);
+    if (vol >= 70) clearInterval(iv);
+  }, 100);
+}
+
+musicBtn.addEventListener('click', () => {
+  musicActive = !musicActive;
+  if (musicActive) {
+    ytPlayer?.playVideo();
+    musicBtn.textContent = '♪';
+    musicBtn.classList.remove('muted');
+  } else {
+    ytPlayer?.pauseVideo();
+    musicBtn.textContent = '♩';
+    musicBtn.classList.add('muted');
+  }
+});
 
 // ── CANVAS & GLOBALS ──────────────────────────────────────────────────────────
 const canvas = document.getElementById('canvas');
@@ -806,6 +868,8 @@ document.getElementById('enter-btn').addEventListener('click', () => {
   const intro = document.getElementById('intro');
   intro.classList.add('out');
   setTimeout(() => intro.remove(), 2200);
+  musicBtn.classList.add('visible');
+  fadeInMusic();
 });
 
 // ── RESIZE ────────────────────────────────────────────────────────────────────
