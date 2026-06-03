@@ -309,10 +309,11 @@ function drawMemoryCanvas(t, dt) {
 
 // ── MÚSICA ────────────────────────────────────────────────────────────────────
 const YT_VIDEO_ID = '6wh-GkQHibU';
-let ytPlayer    = null;
-let musicReady  = false;
-let musicActive = true;
-const musicBtn  = document.getElementById('music-btn');
+let ytPlayer     = null;
+let musicReady   = false;
+let musicActive  = true;
+let musicPending = false;   // true si el usuario ya entró pero el player aún no cargó
+const musicBtn   = document.getElementById('music-btn');
 
 function onYouTubeIframeAPIReady() {
   ytPlayer = new YT.Player('yt-player', {
@@ -322,13 +323,15 @@ function onYouTubeIframeAPIReady() {
       onReady: e => {
         musicReady = true;
         e.target.setVolume(0);
-      }
+        if (musicPending && musicActive) _startFade();  // usuario ya había entrado
+      },
+      onError: () => console.warn('YT player error — el video puede tener restricciones de embedding')
     }
   });
 }
 
-function fadeInMusic() {
-  if (!ytPlayer || !musicActive) return;
+function _startFade() {
+  musicPending = false;
   ytPlayer.playVideo();
   let vol = 0;
   const iv = setInterval(() => {
@@ -336,6 +339,12 @@ function fadeInMusic() {
     ytPlayer.setVolume(vol);
     if (vol >= 70) clearInterval(iv);
   }, 100);
+}
+
+function fadeInMusic() {
+  if (!musicActive) return;
+  if (!ytPlayer || !musicReady) { musicPending = true; return; }  // esperar onReady
+  _startFade();
 }
 
 musicBtn.addEventListener('click', () => {
