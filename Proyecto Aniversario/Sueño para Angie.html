@@ -138,7 +138,8 @@
   .mc-placeholder__glow { width:90px; height:90px; border-radius:50%; filter:blur(24px); opacity:.55; }
   .mc-placeholder__hint { font-size:9px; letter-spacing:.35em; text-transform:uppercase; color:rgba(180,140,240,.42); }
   .mc-body { padding:58px 52px 52px; display:flex; flex-direction:column; justify-content:center; gap:20px; }
-  .mc-date { font-size:12px; letter-spacing:.32em; text-transform:lowercase; color:var(--ink-faint); }
+  .mc-date { display:none; }
+  .whisper__date { display:none; }
   .mc-title { font-family:'Cormorant Garamond',Georgia,serif; font-weight:300; font-size:clamp(34px,4.5vw,62px); line-height:1.04; color:var(--ink); }
   .mc-divider { display:flex; align-items:center; gap:12px; }
   .mc-divider__line { flex:1; height:1px; background:linear-gradient(to right,transparent,rgba(180,130,240,.28),transparent); }
@@ -199,30 +200,38 @@
 <script>
 // ── MEMORIES ──────────────────────────────────────────────────────────────────
 const MEMORIES = [
-  { id:0,  date:'enero · 2023',      title:'El primer café',      hue:280, sat:65, photo:null,
-    note:'La mañana en que el tiempo se detuvo y supe que algo había cambiado para siempre.' },
-  { id:1,  date:'febrero · 2023',    title:'Tu primer mensaje',   hue:250, sat:60, photo:null,
-    note:'Tres palabras que llegaron a las 11 de la noche y que no supe cómo responder sin delatar todo lo que sentía.' },
-  { id:2,  date:'marzo · 2023',      title:'Aquella tarde',       hue:320, sat:58, photo:null,
-    note:'El sol se ponía de una manera que solo existe en los sueños y en los recuerdos que uno guarda con más cuidado.' },
-  { id:3,  date:'abril · 2023',      title:'La primera promesa',  hue:350, sat:55, photo:null,
-    note:'No hicimos ninguna en voz alta. Pero estaba ahí, entre las palabras que no dijimos y las miradas que sí.' },
-  { id:4,  date:'junio · 2023',      title:'Tu risa',             hue:195, sat:55, photo:null,
-    note:'No sabía que una risa podía iluminar un cuarto entero. Aprendí eso contigo.' },
-  { id:5,  date:'agosto · 2023',     title:'El verano nuestro',   hue:45,  sat:62, photo:null,
-    note:'Calor, música baja, tiempo que no tiene prisa. Así debería ser siempre todo.' },
-  { id:6,  date:'octubre · 2023',    title:'La lluvia contigo',   hue:210, sat:58, photo:null,
-    note:'La lluvia sonaba diferente ese día. Como si el mundo entero quisiera detenerse para mirarnos.' },
-  { id:7,  date:'diciembre · 2023',  title:'El primer abrazo',    hue:38,  sat:68, photo:null,
-    note:'El mundo afuera podía esperar. Dentro de ese abrazo el tiempo era otro.' },
-  { id:8,  date:'enero · 2024',      title:'Año nuevo',           hue:170, sat:52, photo:null,
-    note:'Lo único que quería llevarme al año siguiente era seguir conociéndote.' },
-  { id:9,  date:'febrero · 2024',    title:'Siempre',             hue:155, sat:48, photo:null,
-    note:'Aquí, contigo, en este sueño que construimos juntos sin darnos cuenta.' },
-  { id:10, date:'marzo · 2024',      title:'Tu cumpleaños',       hue:300, sat:62, photo:null,
-    note:'Quería que fuera el mejor día. Creo que para mí lo fue más que para ti.' },
-  { id:11, date:'hoy',               title:'Este momento',        hue:260, sat:70, photo:null,
-    note:'Cada recuerdo me trajo hasta aquí. Y aquí, contigo, es donde quiero quedarme.' },
+  { id:0,  title:'El comienzo',          hue:280, sat:65, photo:'Fotos aniversario/1.jpg',
+    note:'Ese día me enamoré de una linda mujercita.' },
+  { id:1,  title:'Tejo y bolirana',      hue:310, sat:60, photo:'Fotos aniversario/2.jpg',
+    note:'Eres hermosa y mala para el tejo.' },
+  { id:2,  title:'La reina',             hue:340, sat:62, photo:'Fotos aniversario/3.jpg',
+    note:'La reina y dueña de mi corazón.' },
+  { id:3,  title:'La indicada',          hue:15,  sat:65, photo:'Fotos aniversario/4.jpg',
+    note:'Confirmé que eres la indicada.' },
+  { id:4,  title:'Mis logros',           hue:45,  sat:60, photo:'Fotos aniversario/5.jpg',
+    note:'Gracias por acompañarme en mis logros.' },
+  { id:5,  title:'Las risas',            hue:75,  sat:55, photo:'Fotos aniversario/6.jpg',
+    note:'Vivimos para contarlo, las risas no faltaron.' },
+  { id:6,  title:'Un lindo viaje',       hue:140, sat:52, photo:'Fotos aniversario/7.jpg',
+    note:'Una hermosa foto y una agradable compañía.' },
+  { id:7,  title:'Guardianes de la bahía', hue:185, sat:58, photo:'Fotos aniversario/8.jpg',
+    note:'Somos los guardianes de la bahía.' },
+  { id:8,  title:'Tu sonrisa',           hue:210, sat:60, photo:'Fotos aniversario/9.jpg',
+    note:'Tu sonrisa brilla más que las chispitas.' },
+  { id:9,  title:'Nuestro hogar',        hue:240, sat:58, photo:'Fotos aniversario/10.jpg',
+    note:'Nuestro futuro hogar.' },
+  { id:10, title:'Vive la vida',         hue:265, sat:62, photo:'Fotos aniversario/11.jpg',
+    note:'♫ Vive la vida y no dejes que la vida te viva ♫' },
+  { id:11, title:'El bailoteo',          hue:295, sat:60, photo:'Fotos aniversario/12.jpg',
+    note:'Gracias por hacerme sentir chimbita.' },
+  { id:12, title:'Lo merecíamos',        hue:320, sat:58, photo:'Fotos aniversario/13.jpg',
+    note:'Te lo merecías, me lo merecía, nos lo merecíamos.' },
+  { id:13, title:'La flor más hermosa',  hue:0,   sat:62, photo:'Fotos aniversario/14.jpg',
+    note:'Ahí me di cuenta que la flor más hermosa estaba junto a mí.' },
+  { id:14, title:'La plaza de todos',    hue:35,  sat:65, photo:'Fotos aniversario/15.jpg',
+    note:'Nuestra primera vez en la plaza de todos ¡Expectacular!' },
+  { id:15, title:'En familia',           hue:160, sat:55, photo:'Fotos aniversario/16.jpg',
+    note:'Nuestro primer viaje en familia.' },
 ];
 
 // ── CANVAS & GLOBALS ──────────────────────────────────────────────────────────
