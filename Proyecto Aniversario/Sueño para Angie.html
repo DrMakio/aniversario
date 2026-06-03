@@ -123,15 +123,35 @@
   .mv-nav:hover { background:rgba(255,255,255,.17); transform:translateY(-50%) scale(1.08); }
   .mv-nav--prev { left:24px; } .mv-nav--next { right:24px; }
   .mv-nav span { display:block; margin-top:-5px; }
+  #mv-canvas {
+    position:absolute; inset:0; width:100%; height:100%;
+    z-index:2; pointer-events:none;
+  }
   .memory-card {
     position:relative; z-index:3;
     display:grid; grid-template-columns:1fr 1fr;
     width:min(1020px,92vw); max-height:84vh; border-radius:24px;
-    background:rgba(18,6,44,.80); border:1px solid rgba(180,130,240,.22);
+    background:radial-gradient(ellipse at 28% 45%,rgba(55,14,95,.72) 0%,rgba(18,5,42,.85) 55%,rgba(8,2,20,.92) 100%);
+    border:1px solid rgba(190,140,255,.20);
     backdrop-filter:blur(32px) saturate(1.1); -webkit-backdrop-filter:blur(32px) saturate(1.1);
-    box-shadow:0 50px 100px -40px rgba(80,30,180,.48),0 0 0 1px rgba(180,130,240,.08),inset 0 1px 0 rgba(255,255,255,.10);
+    box-shadow:
+      0 0 0 1px rgba(180,120,255,.10),
+      0 0 30px  rgba(160,90,255,.42),
+      0 0 65px  rgba(140,70,255,.28),
+      0 0 130px rgba(120,50,255,.16),
+      0 0 250px rgba(100,30,255,.09),
+      inset 0 0 90px -30px rgba(180,110,255,.11),
+      0 50px 100px -40px rgba(80,30,180,.48);
     overflow:hidden;
   }
+  .memory-card::before {
+    content:''; position:absolute; inset:-1px; border-radius:25px;
+    z-index:0; pointer-events:none;
+    background:conic-gradient(from 0deg,transparent 0deg,rgba(200,155,255,.22) 60deg,transparent 120deg);
+    animation:card-sweep 7s linear infinite;
+  }
+  @keyframes card-sweep { to { transform:rotate(360deg); } }
+  .mc-photo, .mc-body { position:relative; z-index:1; }
   .mc-photo { position:relative; min-height:56vh; background:rgba(12,4,30,.65); }
   .mc-photo img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
   .mc-photo-shade { position:absolute; inset:0; z-index:1; pointer-events:none; background:linear-gradient(to right,transparent 70%,rgba(18,6,44,.7) 100%); }
@@ -188,6 +208,7 @@
 
 <div id="memory-view">
   <div class="mv-scrim" id="mv-scrim"></div>
+  <canvas id="mv-canvas"></canvas>
   <button class="mv-close" id="mv-close"><span class="mv-close__x">×</span><span class="mv-close__label">cerrar</span></button>
   <div class="mv-counter"><span id="mv-current">1</span><span> / </span><span id="mv-total">12</span></div>
   <button class="mv-nav mv-nav--prev" id="mv-prev"><span>‹</span></button>
@@ -251,6 +272,107 @@ const MEMORIES = [
   { id:15, title:'En familia',           hue:160, sat:55, photo:'Fotos aniversario/16.jpg',
     note:'Nuestro primer viaje en familia.' },
 ];
+
+// ── CONSTELACIÓN ──────────────────────────────────────────────────────────────
+let constellationStars = [];
+
+function buildConstellation() {
+  const W2 = Math.min(W * 0.58, 640);
+  const H2 = W2 * 0.30;
+  const tmp = document.createElement('canvas');
+  tmp.width = Math.round(W2); tmp.height = Math.round(H2);
+  const tc  = tmp.getContext('2d');
+  tc.fillStyle  = '#fff';
+  const sz = Math.round(H2 * 0.40);
+  tc.font       = `300 ${sz}px 'Cormorant Garamond', Georgia, serif`;
+  tc.textAlign  = 'center';
+  tc.fillText('Te amo', W2/2, H2 * 0.44);
+  tc.fillText('Angie',  W2/2, H2 * 0.92);
+  const { data } = tc.getImageData(0, 0, tmp.width, tmp.height);
+  const offX = (W - W2) / 2;
+  const offY = H * 0.10;
+  const step = 8;
+  constellationStars = [];
+  for (let y = 0; y < tmp.height; y += step) {
+    for (let x = 0; x < tmp.width; x += step) {
+      if (data[(y * tmp.width + x) * 4 + 3] > 90) {
+        constellationStars.push({
+          x: x + offX, y: y + offY,
+          r: rnd(0.8, 2.5),
+          base: rnd(0.48, 0.92),
+          freq: rnd(0.35, 2.1),
+          ph: rndTau(),
+          hue: rnd(258, 312)
+        });
+      }
+    }
+  }
+}
+
+function drawConstellation(t) {
+  if (!constellationStars.length) return;
+  ctx.save();
+  // Líneas de constelación entre estrellas vecinas
+  ctx.strokeStyle = 'rgba(200,155,255,0.07)';
+  ctx.lineWidth   = 0.65;
+  for (let i = 0; i < constellationStars.length; i++) {
+    const a = constellationStars[i];
+    for (let j = i + 1; j < constellationStars.length; j++) {
+      const b = constellationStars[j];
+      if (Math.hypot(a.x - b.x, a.y - b.y) < 22) {
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      }
+    }
+  }
+  // Estrellas parpadeantes
+  for (const s of constellationStars) {
+    const alpha = s.base * (0.5 + 0.5 * Math.sin(t * s.freq + s.ph));
+    if (s.r > 1.4) {
+      const g = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r * 5);
+      g.addColorStop(0, `hsla(${s.hue},72%,92%,${alpha * 0.42})`);
+      g.addColorStop(1, 'transparent');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r * 5, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fillStyle = `hsla(${s.hue},65%,96%,${alpha})`;
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+// ── POLVO ESTELAR (memory-view) ───────────────────────────────────────────────
+let mvDust = [];
+const mvCanvas = document.getElementById('mv-canvas');
+let mvCtx = null;
+
+function openMemoryCanvas() {
+  mvCanvas.width  = window.innerWidth;
+  mvCanvas.height = window.innerHeight;
+  mvCtx = mvCanvas.getContext('2d');
+  const W_ = mvCanvas.width, H_ = mvCanvas.height;
+  mvDust = Array.from({ length: 75 }, () => ({
+    x: rnd(0, W_), y: rnd(0, H_),
+    vx: rnd(-14, 14), vy: rnd(-10, 10),
+    r: rnd(0.3, 1.5), bright: rnd(0.12, 0.52),
+    freq: rnd(0.25, 1.3), ph: rndTau(), hue: rnd(245, 315)
+  }));
+}
+
+function drawMemoryCanvas(t, dt) {
+  if (!mvCtx) return;
+  const W_ = mvCanvas.width, H_ = mvCanvas.height;
+  mvCtx.clearRect(0, 0, W_, H_);
+  for (const p of mvDust) {
+    p.x += p.vx * dt; p.y += p.vy * dt;
+    if (p.x < 0) p.x = W_; if (p.x > W_) p.x = 0;
+    if (p.y < 0) p.y = H_; if (p.y > H_) p.y = 0;
+    const a = p.bright * (0.4 + 0.6 * Math.sin(t * p.freq + p.ph));
+    mvCtx.beginPath(); mvCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    mvCtx.fillStyle = `hsla(${p.hue},65%,90%,${a})`;
+    mvCtx.fill();
+  }
+}
 
 // ── MÚSICA ────────────────────────────────────────────────────────────────────
 const YT_VIDEO_ID = '6wh-GkQHibU';
@@ -757,10 +879,12 @@ function loop(ts) {
   ctx.clearRect(0, 0, W, H);
   drawBackground(t);
   drawStars(t);
+  drawConstellation(t);
   drawComets(t, dt);
   drawClouds(t);
   drawAsteroid(t, dt);
   if (enterCloud) drawImmersion(t);
+  if (appState === 'memory') drawMemoryCanvas(t, dt);
   drawVignette();
   updateWhisper();
   requestAnimationFrame(loop);
@@ -826,6 +950,7 @@ function startEnter(cloud) {
   whisperEl.classList.remove('show');
   hoveredCloud = null;
   for (const c of clouds) c.hovered = false;
+  openMemoryCanvas();
 }
 
 function closeMemory() {
@@ -879,6 +1004,7 @@ function resize() {
   prevMouseX = W/2; prevMouseY = H/2;
   initStars();
   initClouds();
+  document.fonts.ready.then(buildConstellation);
 }
 window.addEventListener('resize', resize);
 resize();
