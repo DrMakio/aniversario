@@ -248,9 +248,9 @@
   #welcome-screen.in  { opacity:1; pointer-events:all; }
   #welcome-screen.out { opacity:0; pointer-events:none; }
   .wc-box {
-    max-width:700px; text-align:center;
+    width:min(700px,92vw); max-height:90vh; overflow-y:auto; text-align:center;
     background:rgba(18,6,44,.75); border:1px solid rgba(180,130,240,.22);
-    border-radius:24px; padding:52px 56px;
+    border-radius:24px; padding:clamp(28px,5vmin,52px) clamp(22px,5vw,56px);
     backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px);
     box-shadow:0 0 80px rgba(100,30,200,.24);
   }
@@ -1116,8 +1116,21 @@ canvas.addEventListener('click', e => {
 
 canvas.addEventListener('touchend', e => {
   if (appState !== 'dream') return;
-  const t = e.changedTouches[0];
-  const hit = hitTest(t.clientX, t.clientY);
+  const touch = e.changedTouches[0];
+  const tx = touch.clientX, ty = touch.clientY;
+  if (asteroid?.projPos) {
+    const { sx, sy, scale } = asteroid.projPos;
+    if (Math.hypot(tx - sx, ty - sy) < Math.max(28, asteroid.baseR * scale * 1.6)) {
+      window.open(ASTEROID_URL, '_blank'); return;
+    }
+  }
+  if (ship?.projPos) {
+    const { sx, sy, scale } = ship.projPos;
+    if (Math.hypot(tx - sx, ty - sy) < Math.max(28, ship.baseR * scale * 2.2)) {
+      window.open(SHIP_URL, '_blank'); return;
+    }
+  }
+  const hit = hitTest(tx, ty);
   if (hit) startEnter(hit);
 }, { passive: true });
 
@@ -1158,7 +1171,6 @@ function closeMemory() {
 
 function renderCard() {
   const mem = MEMORIES[activeIdx];
-  mcDate.textContent  = mem.date;
   mcTitle.textContent = mem.title;
   mcNote.textContent  = mem.note;
   mvCurr.textContent  = activeIdx + 1;
