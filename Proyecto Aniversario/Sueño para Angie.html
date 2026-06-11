@@ -300,11 +300,15 @@
         haz perdido,<br>
         vuelve a intentarlo de nuevo
       </p>
+      <button id="btn-retry" class="ps-btn" style="margin-top:22px;">
+        <div class="ps-btn__bg"></div>
+        <span>Intentar de nuevo</span>
+      </button>
     </div>
   </div>
   <div class="ps-content">
     <p class="ps-kicker">para angie</p>
-    <h1 class="ps-title">Un sueño<br><em>de recuerdos</em></h1>
+    <h1 class="ps-title">Explorando<br><em>nuestros recuerdos</em></h1>
     <p class="ps-sub">Selecciona tu modo de juego</p>
     <div class="ps-btns">
       <button id="btn-1p" class="ps-btn ps-btn--1p">
@@ -1215,6 +1219,10 @@ function startDream() {
 
 document.getElementById('btn-1p').addEventListener('click', () => {
   document.getElementById('siren-overlay').classList.add('active');
+});
+
+document.getElementById('btn-retry').addEventListener('click', () => {
+  document.getElementById('siren-overlay').classList.remove('active');
 });
 
 document.getElementById('btn-2p').addEventListener('click', () => {
