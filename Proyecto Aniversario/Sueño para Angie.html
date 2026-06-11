@@ -7,7 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400;1,600&display=swap" rel="stylesheet">
-<script src="https://www.youtube.com/iframe_api"></script>
 <style>
   :root {
     --ink:       #f0e8ff;
@@ -287,7 +286,6 @@
 </head>
 <body>
 <canvas id="canvas"></canvas>
-<div id="yt-player" style="position:fixed;width:0;height:0;overflow:hidden;pointer-events:none;"></div>
 <button id="music-btn" aria-label="Música">♪</button>
 
 <!-- ── SELECCIÓN DE JUGADOR ── -->
@@ -456,66 +454,30 @@ function drawMemoryCanvas(t, dt) {
 
 // ── MÚSICA ────────────────────────────────────────────────────────────────────
 const YT_VIDEO_ID = '6wh-GkQHibU';
-let ytPlayer     = null;
-let musicReady   = false;
-let musicActive  = true;
-let musicPending = false;   // true si el usuario ya entró pero el player aún no cargó
-const musicBtn   = document.getElementById('music-btn');
-
-function onYouTubeIframeAPIReady() {
-  ytPlayer = new YT.Player('yt-player', {
-    videoId: YT_VIDEO_ID,
-    playerVars: {
-      autoplay: 0, controls: 0, rel: 0, modestbranding: 1,
-      enablejsapi: 1,
-      origin: window.location.origin || 'https://drmakio.github.io'
-    },
-    events: {
-      onReady: e => {
-        musicReady = true;
-        e.target.setVolume(0);
-        if (musicPending && musicActive) _startFade();
-      },
-      onStateChange: e => {
-        // Loop manual: más fiable que loop:1 + playlist
-        if (e.data === YT.PlayerState.ENDED && musicActive) ytPlayer.playVideo();
-      },
-      onError: e => {
-        console.warn('YT error code:', e.data);
-        musicBtn.textContent = '♪'; // mantener visible pero sin crash
-      }
-    }
-  });
-}
-
-function _startFade() {
-  musicPending = false;
-  ytPlayer.playVideo();
-  let vol = 0;
-  const iv = setInterval(() => {
-    vol = Math.min(vol + 3, 70);
-    ytPlayer.setVolume(vol);
-    if (vol >= 70) clearInterval(iv);
-  }, 100);
-}
+let musicActive = true;
+let ytIframe    = null;
+const musicBtn  = document.getElementById('music-btn');
 
 function fadeInMusic() {
-  if (!musicActive) return;
-  if (!ytPlayer || !musicReady) { musicPending = true; return; }  // esperar onReady
-  _startFade();
+  if (ytIframe) return;
+  ytIframe = document.createElement('iframe');
+  ytIframe.style.cssText = 'position:fixed;width:0;height:0;border:0;opacity:0;pointer-events:none;';
+  ytIframe.allow = 'autoplay; encrypted-media';
+  ytIframe.src = `https://www.youtube.com/embed/${YT_VIDEO_ID}?autoplay=1&loop=1&playlist=${YT_VIDEO_ID}&controls=0&rel=0&enablejsapi=1`;
+  document.body.appendChild(ytIframe);
+}
+
+function ytCmd(func) {
+  ytIframe?.contentWindow?.postMessage(
+    JSON.stringify({ event: 'command', func, args: [] }), '*'
+  );
 }
 
 musicBtn.addEventListener('click', () => {
   musicActive = !musicActive;
-  if (musicActive) {
-    ytPlayer?.playVideo();
-    musicBtn.textContent = '♪';
-    musicBtn.classList.remove('muted');
-  } else {
-    ytPlayer?.pauseVideo();
-    musicBtn.textContent = '♩';
-    musicBtn.classList.add('muted');
-  }
+  ytCmd(musicActive ? 'playVideo' : 'pauseVideo');
+  musicBtn.textContent = musicActive ? '♪' : '♩';
+  musicBtn.classList.toggle('muted', !musicActive);
 });
 
 // ── CANVAS & GLOBALS ──────────────────────────────────────────────────────────
