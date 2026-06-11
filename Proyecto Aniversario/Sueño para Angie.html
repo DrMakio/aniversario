@@ -465,14 +465,25 @@ const musicBtn   = document.getElementById('music-btn');
 function onYouTubeIframeAPIReady() {
   ytPlayer = new YT.Player('yt-player', {
     videoId: YT_VIDEO_ID,
-    playerVars: { autoplay:0, controls:0, loop:1, playlist:YT_VIDEO_ID, rel:0, modestbranding:1 },
+    playerVars: {
+      autoplay: 0, controls: 0, rel: 0, modestbranding: 1,
+      enablejsapi: 1,
+      origin: window.location.origin || 'https://drmakio.github.io'
+    },
     events: {
       onReady: e => {
         musicReady = true;
         e.target.setVolume(0);
-        if (musicPending && musicActive) _startFade();  // usuario ya había entrado
+        if (musicPending && musicActive) _startFade();
       },
-      onError: () => console.warn('YT player error — el video puede tener restricciones de embedding')
+      onStateChange: e => {
+        // Loop manual: más fiable que loop:1 + playlist
+        if (e.data === YT.PlayerState.ENDED && musicActive) ytPlayer.playVideo();
+      },
+      onError: e => {
+        console.warn('YT error code:', e.data);
+        musicBtn.textContent = '♪'; // mantener visible pero sin crash
+      }
     }
   });
 }
