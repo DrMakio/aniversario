@@ -592,6 +592,120 @@ function drawAsteroid(t, dt) {
   ctx.restore();
 }
 
+// ── NAVE ESPACIAL ─────────────────────────────────────────────────────────────
+const SHIP_URL = 'https://view.genially.com/6a1e22c988ea851c550d21dd';
+let ship      = null;
+let shipTimer = rnd(55, 95);
+
+function spawnShip() {
+  const D   = Math.min(W, H) * 0.40;
+  const sy_ = cam.yaw   + rnd(-0.68, 0.68);
+  const sp_ = cam.pitch + rnd(-0.30, 0.30);
+  ship = {
+    wx: D * Math.cos(sp_) * Math.sin(sy_),
+    wy: D * Math.sin(sp_),
+    wz: -D * Math.cos(sp_) * Math.cos(sy_),
+    baseR: rnd(13, 21),
+    angle: rndTau(),
+    life: 0, maxLife: rnd(20, 36), projPos: null
+  };
+}
+
+function drawShip(t, dt) {
+  if (!ship) return;
+  ship.life  += dt;
+  ship.angle += 0.28 * dt;
+
+  if (ship.life > ship.maxLife) { ship = null; return; }
+
+  const proj = project(ship.wx, ship.wy, ship.wz);
+  ship.projPos = proj;
+  if (!proj) return;
+
+  const { sx, sy, scale } = proj;
+  const r     = ship.baseR * scale;
+  const fade  = Math.min(ship.life / 2, 1) * Math.max(0, 1 - (ship.life - ship.maxLife + 2.5) / 2.5);
+  if (fade <= 0.01) return;
+
+  const pulse  = 0.5 + 0.5 * Math.sin(t * 3.4);
+  const blink1 = Math.sin(t * 4.8) > 0;
+  const blink2 = Math.sin(t * 4.8 + Math.PI) > 0;
+
+  ctx.save();
+  ctx.translate(sx, sy);
+  ctx.rotate(ship.angle);
+  ctx.globalAlpha = fade;
+
+  // Halo cian exterior
+  const glowR = r * 5;
+  const glow  = ctx.createRadialGradient(0, 0, r * 0.5, 0, 0, glowR);
+  glow.addColorStop(0,   `rgba(60,210,255,${0.20 + pulse * 0.13})`);
+  glow.addColorStop(0.45,`rgba(20,140,255,0.07)`);
+  glow.addColorStop(1,   'transparent');
+  ctx.fillStyle = glow;
+  ctx.beginPath(); ctx.arc(0, 0, glowR, 0, Math.PI * 2); ctx.fill();
+
+  // Alas (triángulos)
+  const wingColor = `rgba(70,115,175,${fade * 0.88})`;
+  ctx.fillStyle = wingColor;
+  ctx.beginPath();
+  ctx.moveTo(-r*0.3, -r*0.18); ctx.lineTo(-r*2.9, r*0.85); ctx.lineTo(r*0.3, r*0.10);
+  ctx.closePath(); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(-r*0.3,  r*0.18); ctx.lineTo(-r*2.9,-r*0.85); ctx.lineTo(r*0.3,-r*0.10);
+  ctx.closePath(); ctx.fill();
+
+  // Fuselaje principal
+  ctx.beginPath();
+  ctx.ellipse(0, 0, r * 2.1, r * 0.58, 0, 0, Math.PI * 2);
+  const hull = ctx.createLinearGradient(0, -r*0.58, 0, r*0.58);
+  hull.addColorStop(0,   `rgba(190,218,248,${fade})`);
+  hull.addColorStop(0.45,`rgba(110,155,205,${fade})`);
+  hull.addColorStop(1,   `rgba(55,85,135,${fade})`);
+  ctx.fillStyle = hull; ctx.fill();
+  ctx.strokeStyle = `rgba(120,210,255,${fade * 0.55})`; ctx.lineWidth = 0.9; ctx.stroke();
+
+  // Cabina
+  ctx.beginPath();
+  ctx.ellipse(r*0.52, -r*0.28, r*0.46, r*0.32, -0.28, 0, Math.PI * 2);
+  const cab = ctx.createRadialGradient(r*0.42, -r*0.38, 0, r*0.52, -r*0.28, r*0.46);
+  cab.addColorStop(0,   `rgba(190,245,255,${fade * 0.95})`);
+  cab.addColorStop(1,   `rgba(40,100,200,${fade * 0.65})`);
+  ctx.fillStyle = cab; ctx.fill();
+
+  // Motor (glow cian trasero)
+  const eng = ctx.createRadialGradient(-r*2.05, 0, 0, -r*2.05, 0, r*0.68);
+  eng.addColorStop(0,   `rgba(40,210,255,${fade * (0.75 + pulse * 0.25)})`);
+  eng.addColorStop(0.5, `rgba(10,100,255,${fade * 0.35})`);
+  eng.addColorStop(1,   'transparent');
+  ctx.fillStyle = eng;
+  ctx.beginPath(); ctx.arc(-r*2.05, 0, r*0.68, 0, Math.PI*2); ctx.fill();
+
+  // Luces intermitentes
+  if (blink1) {
+    ctx.beginPath(); ctx.arc(-r*2.7, r*0.72, r*0.14, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(255,60,60,${fade})`; ctx.fill();
+  }
+  if (blink2) {
+    ctx.beginPath(); ctx.arc(-r*2.7,-r*0.72, r*0.14, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(60,255,120,${fade})`; ctx.fill();
+  }
+
+  ctx.globalAlpha = 1;
+  ctx.restore();
+
+  // Label
+  if (fade > 0.42) {
+    ctx.save();
+    ctx.globalAlpha = fade * (0.52 + pulse * 0.36);
+    ctx.fillStyle   = 'rgba(100,220,255,1)';
+    ctx.font        = `${Math.max(9, Math.round(12 * scale))}px sans-serif`;
+    ctx.textAlign   = 'center';
+    ctx.fillText('✦ toca', sx, sy - r * 3.2);
+    ctx.restore();
+  }
+}
+
 // ── NUBES DE GAS ──────────────────────────────────────────────────────────────
 let clouds = [];
 
@@ -750,7 +864,15 @@ const whisperDate  = document.getElementById('whisper-date');
 const whisperTitle = document.getElementById('whisper-title');
 
 function updateWhisper() {
-  // Cursor sobre asteroide tiene prioridad
+  // Cursor sobre nave o asteroide tiene prioridad
+  if (appState === 'dream' && ship?.projPos) {
+    const { sx, sy, scale } = ship.projPos;
+    if (Math.hypot((prevMouseX||W/2) - sx, (prevMouseY||H/2) - sy) < Math.max(28, ship.baseR * scale * 2.2)) {
+      whisperEl.classList.remove('show');
+      canvas.style.cursor = 'pointer';
+      return;
+    }
+  }
   if (appState === 'dream' && asteroid?.projPos) {
     const { sx, sy, scale } = asteroid.projPos;
     if (Math.hypot((prevMouseX||W/2) - sx, (prevMouseY||H/2) - sy) < Math.max(28, asteroid.baseR * scale * 1.6)) {
@@ -817,6 +939,11 @@ function loop(ts) {
     spawnAsteroid();
     asteroidTimer = rnd(45, 100);
   }
+  shipTimer -= dt;
+  if (shipTimer <= 0 && !ship && appState === 'dream') {
+    spawnShip();
+    shipTimer = rnd(60, 130);
+  }
 
   ctx.clearRect(0, 0, W, H);
   drawBackground(t);
@@ -824,6 +951,7 @@ function loop(ts) {
   drawComets(t, dt);
   drawClouds(t);
   drawAsteroid(t, dt);
+  drawShip(t, dt);
   if (enterCloud) drawImmersion(t);
   if (appState === 'memory') drawMemoryCanvas(t, dt);
   drawVignette();
@@ -852,6 +980,13 @@ canvas.addEventListener('click', e => {
     const { sx, sy, scale } = asteroid.projPos;
     if (Math.hypot(e.clientX - sx, e.clientY - sy) < Math.max(28, asteroid.baseR * scale * 1.6)) {
       window.open(ASTEROID_URL, '_blank');
+      return;
+    }
+  }
+  if (ship?.projPos) {
+    const { sx, sy, scale } = ship.projPos;
+    if (Math.hypot(e.clientX - sx, e.clientY - sy) < Math.max(28, ship.baseR * scale * 2.2)) {
+      window.open(SHIP_URL, '_blank');
       return;
     }
   }
