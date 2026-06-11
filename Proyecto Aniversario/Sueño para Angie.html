@@ -175,6 +175,100 @@
   }
   @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.001ms !important; transition-duration:.001ms !important; } }
 
+  /* ── PANTALLA SELECCIÓN DE JUGADOR ── */
+  #player-select {
+    position:fixed; inset:0; z-index:10;
+    display:flex; align-items:center; justify-content:center;
+    transition:opacity 1.4s ease, filter 1.4s ease;
+  }
+  #player-select.out { opacity:0; filter:blur(20px); pointer-events:none; }
+  .ps-content { text-align:center; padding:4vmin; position:relative; z-index:2; }
+  .ps-kicker {
+    font-size:clamp(10px,1.1vw,13px); letter-spacing:.55em; text-transform:uppercase;
+    color:var(--ink-faint); margin-bottom:28px;
+  }
+  .ps-title {
+    font-family:'Cormorant Garamond',Georgia,serif;
+    font-weight:300; font-size:clamp(52px,10vw,132px); line-height:.92;
+    color:var(--ink); margin-bottom:16px;
+  }
+  .ps-title em { font-style:italic; color:var(--mauve); }
+  .ps-sub { font-size:clamp(13px,1.2vw,16px); color:var(--ink-faint); letter-spacing:.2em; text-transform:uppercase; margin-bottom:48px; }
+  .ps-btns { display:flex; gap:22px; justify-content:center; }
+  .ps-btn { position:relative; padding:17px 44px; border-radius:999px; transition:transform .4s ease; }
+  .ps-btn:hover { transform:translateY(-3px) scale(1.03); }
+  .ps-btn__bg {
+    position:absolute; inset:0; border-radius:999px;
+    border:1px solid rgba(200,160,232,.28); background:rgba(70,30,110,.22);
+    backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+    box-shadow:0 0 50px rgba(160,80,240,.12),inset 0 1px 0 rgba(255,255,255,.14);
+    transition:background .4s, box-shadow .4s;
+  }
+  .ps-btn--1p .ps-btn__bg { border-color:rgba(255,80,80,.28); background:rgba(80,15,15,.25); }
+  .ps-btn:hover .ps-btn__bg { background:rgba(90,40,140,.38); box-shadow:0 0 70px rgba(160,80,240,.24),inset 0 1px 0 rgba(255,255,255,.22); }
+  .ps-btn span { position:relative; font-family:'Cormorant Garamond',Georgia,serif; font-weight:300; font-size:22px; letter-spacing:.1em; }
+
+  /* ── SIRENA ── */
+  #siren-overlay {
+    position:absolute; inset:0; z-index:3;
+    display:none; flex-direction:column; align-items:center; justify-content:center; gap:32px;
+    backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+    animation:siren-bg .38s ease-in-out infinite;
+  }
+  #siren-overlay.active { display:flex; }
+  @keyframes siren-bg {
+    0%,100% { background:rgba(60,0,0,.32); }
+    50%     { background:rgba(200,0,0,.58); }
+  }
+  .siren-lamp {
+    width:88px; height:88px; border-radius:50%;
+    background:radial-gradient(circle,#ff3030 30%,#990000 100%);
+    animation:siren-glow .38s ease-in-out infinite;
+  }
+  @keyframes siren-glow {
+    0%,100% { box-shadow:0 0 30px 10px rgba(255,0,0,.38),0 0 60px 30px rgba(255,0,0,.14); }
+    50%     { box-shadow:0 0 80px 40px rgba(255,20,20,.96),0 0 160px 80px rgba(255,0,0,.48); }
+  }
+  .siren-card {
+    background:rgba(10,0,0,.78); border:1px solid rgba(255,60,60,.38); border-radius:16px;
+    padding:28px 44px; max-width:440px; text-align:center;
+    box-shadow:0 0 40px rgba(200,0,0,.32);
+  }
+  .siren-text {
+    font-family:'Cormorant Garamond',Georgia,serif;
+    font-size:clamp(22px,3vw,34px); font-weight:300; color:#ffaaaa; line-height:1.6;
+  }
+
+  /* ── BIENVENIDA 2P ── */
+  #welcome-screen {
+    position:fixed; inset:0; z-index:10;
+    display:flex; align-items:center; justify-content:center; padding:5vmin;
+    opacity:0; pointer-events:none;
+    transition:opacity 1.4s ease;
+  }
+  #welcome-screen.in  { opacity:1; pointer-events:all; }
+  #welcome-screen.out { opacity:0; pointer-events:none; }
+  .wc-box {
+    max-width:700px; text-align:center;
+    background:rgba(18,6,44,.75); border:1px solid rgba(180,130,240,.22);
+    border-radius:24px; padding:52px 56px;
+    backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px);
+    box-shadow:0 0 80px rgba(100,30,200,.24);
+  }
+  .wc-good {
+    font-family:'Cormorant Garamond',Georgia,serif; font-weight:300;
+    font-size:clamp(28px,4vw,54px); color:var(--mauve); margin-bottom:22px;
+  }
+  .wc-partner { font-size:clamp(15px,1.5vw,21px); color:var(--ink-soft); margin-bottom:6px; }
+  .wc-partner em { font-style:italic; color:var(--ink); font-size:1.12em; }
+  .wc-nick { font-size:clamp(15px,1.5vw,21px); color:var(--ink-soft); margin-bottom:28px; }
+  .wc-nick strong { color:var(--mauve); font-weight:400; font-size:1.18em; }
+  .wc-divider { height:1px; background:linear-gradient(to right,transparent,rgba(180,130,240,.3),transparent); margin:0 0 28px; }
+  .wc-body {
+    font-family:'Cormorant Garamond',Georgia,serif; font-style:italic; font-weight:300;
+    font-size:clamp(16px,1.55vw,22px); line-height:1.75; color:var(--ink-soft); margin-bottom:40px;
+  }
+
   /* ── BOTÓN MÚSICA ── */
   #music-btn {
     position:fixed; bottom:28px; right:32px; z-index:15;
@@ -196,7 +290,56 @@
 <div id="yt-player" style="position:fixed;width:0;height:0;overflow:hidden;pointer-events:none;"></div>
 <button id="music-btn" aria-label="Música">♪</button>
 
-<div id="intro">
+<!-- ── SELECCIÓN DE JUGADOR ── -->
+<div id="player-select">
+  <div id="siren-overlay">
+    <div class="siren-lamp"></div>
+    <div class="siren-card">
+      <p class="siren-text">
+        Haz seleccionado 1 player,<br>
+        haz perdido,<br>
+        vuelve a intentarlo de nuevo
+      </p>
+    </div>
+  </div>
+  <div class="ps-content">
+    <p class="ps-kicker">para angie</p>
+    <h1 class="ps-title">Un sueño<br><em>de recuerdos</em></h1>
+    <p class="ps-sub">Selecciona tu modo de juego</p>
+    <div class="ps-btns">
+      <button id="btn-1p" class="ps-btn ps-btn--1p">
+        <div class="ps-btn__bg"></div>
+        <span>1 Player</span>
+      </button>
+      <button id="btn-2p" class="ps-btn ps-btn--2p">
+        <div class="ps-btn__bg"></div>
+        <span>2 Players</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── BIENVENIDA 2 PLAYERS ── -->
+<div id="welcome-screen">
+  <div class="wc-box">
+    <p class="wc-good">¡Haz elegido muy bien!</p>
+    <p class="wc-partner">Tu compañero de juego es… <em>"Pinchi"</em></p>
+    <p class="wc-nick">así que tu nickname es <strong>"Pulguita"</strong></p>
+    <div class="wc-divider"></div>
+    <p class="wc-body">
+      Excelente, estás a punto de explorar algunos de los recuerdos de David.<br>
+      David es tu novio en la vida real y estos recuerdos son atesorados en este mundo digital.<br><br>
+      Ahora puedes iniciar — interactúa con cada uno de sus recuerdos, son muy valiosos para él.<br><br>
+      <em>Ah, y por cierto… hay objetos interesantes que aparecen y que harán de esta exploración algo mucho más interesante.</em>
+    </p>
+    <button id="btn-start" class="enter-btn">
+      <div class="enter-btn__bg"></div>
+      <span class="enter-btn__label">¡Feliz Viaje! ✦</span>
+    </button>
+  </div>
+</div>
+
+<div id="intro" style="display:none">
   <p class="intro__kicker">para angie</p>
   <h1 class="intro__title">Un sueño<br><em>de recuerdos</em></h1>
   <p class="intro__sub">Doce nubes flotan a tu alrededor.<br>Cada una guarda un momento nuestro.<br>Mueve el cursor para explorar. Entra en ellas.</p>
@@ -365,7 +508,7 @@ const canvas = document.getElementById('canvas');
 const ctx    = canvas.getContext('2d');
 let W, H;
 
-let appState      = 'intro';
+let appState      = 'select';
 let activeIdx     = 0;
 let enterCloud    = null;
 let enterProgress = 0;
@@ -1064,13 +1207,36 @@ document.getElementById('mv-next').addEventListener('click', () => {
   activeIdx = (activeIdx + 1) % MEMORIES.length; renderCard();
 });
 
-document.getElementById('enter-btn').addEventListener('click', () => {
+function startDream() {
   appState = 'dream';
+  musicBtn.classList.add('visible');
+  fadeInMusic();
+}
+
+document.getElementById('btn-1p').addEventListener('click', () => {
+  document.getElementById('siren-overlay').classList.add('active');
+});
+
+document.getElementById('btn-2p').addEventListener('click', () => {
+  document.getElementById('siren-overlay').classList.remove('active');
+  const ps = document.getElementById('player-select');
+  const wc = document.getElementById('welcome-screen');
+  ps.classList.add('out');
+  setTimeout(() => { ps.style.display = 'none'; wc.classList.add('in'); }, 1400);
+});
+
+document.getElementById('btn-start').addEventListener('click', () => {
+  const wc = document.getElementById('welcome-screen');
+  wc.classList.add('out');
+  setTimeout(() => { wc.style.display = 'none'; }, 1400);
+  startDream();
+});
+
+document.getElementById('enter-btn').addEventListener('click', () => {
+  startDream();
   const intro = document.getElementById('intro');
   intro.classList.add('out');
   setTimeout(() => intro.remove(), 2200);
-  musicBtn.classList.add('visible');
-  fadeInMusic();
 });
 
 // ── RESIZE ────────────────────────────────────────────────────────────────────
